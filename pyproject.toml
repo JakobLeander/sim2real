@@ -10,7 +10,23 @@ readme = "README.md"
 requires-python = ">=3.12.3"
 license = {text = "LICENSE"}
 authors = []
-dependencies = ["pytest"]
+dependencies = [
+    "absl-py",
+    "brax",
+    "etils",
+    "flax",
+    "jax[cuda12]",
+    "lxml",
+    "mediapy",
+    "ml_collections",
+    "mujoco-mjx",
+    "mujoco>=3.5.1.dev879036130",
+    "warp-lang>=1.11",
+    "orbax-checkpoint>=0.11.22",
+    "tqdm",
+    "torch",
+    "pytest",
+]
 
 [project.optional-dependencies]
 dev = ["pytest"]
@@ -22,6 +38,7 @@ where = ["src"]
 [tool.uv]
 managed = true
 python-preference = "managed"
+required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
