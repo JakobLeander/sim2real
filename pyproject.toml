@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sim2real-train"
+version = "0.1.0"
+description = "Simulation to Reality Training Framework"
+readme = "README.md"
+requires-python = ">=3.12.3"
+license = {text = "LICENSE"}
+authors = []
+dependencies = ["pytest"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv]
+managed = true
+python-preference = "managed"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
