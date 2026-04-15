@@ -41,6 +41,7 @@ import mujoco
 from mujoco import mjx
 import numpy as np
 from orbax import checkpoint as ocp
+import pickle
 
 # Project imports
 import robot
@@ -77,7 +78,7 @@ def progress(num_steps, metrics):
 
 
 def main():
-    debug = True
+    debug = False
     configure_mujoco()
 
     print(f"Default GPU: {torch.cuda.get_device_name(torch.cuda.current_device())}")
@@ -119,6 +120,44 @@ def main():
 
     print(f"time to jit: {times[1] - times[0]}")
     print(f"time to train: {times[-1] - times[1]}")
+
+    # Save the trained policy and training metrics
+    policies_dir = epath.Path("policies")
+    policies_dir.mkdir(parents=True, exist_ok=True)
+    policy_file_name = policies_dir / f"robot_policy.pkl"
+
+    with open(f"{policy_file_name}", "wb") as f:
+        pickle.dump(params, f)
+
+    # Save video of trained policy
+
+    # reload params to ensure they were saved correctly (and to demonstrate loading)
+    with open(f"{policy_file_name}", "rb") as f:
+        loaded_params = pickle.load(f)
+
+    print(f"Rendering trained policy video")
+    jit_reset = jax.jit(env.reset)
+    jit_step = jax.jit(env.step)
+    jit_inference_fn = jax.jit(make_inference_fn(loaded_params, deterministic=True))
+
+    rng = jax.random.PRNGKey(42)
+    rollout = []
+    n_episodes = 1
+    frames_to_render = 150
+    for _ in range(n_episodes):
+        state = jit_reset(rng)
+        rollout.append(state)
+        for i in range(frames_to_render):
+            act_rng, rng = jax.random.split(rng)
+            ctrl, _ = jit_inference_fn(state.obs, act_rng)
+            state = jit_step(state, ctrl)
+            rollout.append(state)
+
+    frames = env.render(rollout, camera="cam0", height=480, width=640)
+
+    video_path = policies_dir / f"robot_policy.mp4"
+
+    media.write_video(video_path.as_posix(), frames, fps=1.0 / env.dt)
 
 
 if __name__ == "__main__":

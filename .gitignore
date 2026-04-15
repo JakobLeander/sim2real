@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Pickle files (trained models and data)
+*.pkl
+
+# mp4 files (training videos)
+*.mp4

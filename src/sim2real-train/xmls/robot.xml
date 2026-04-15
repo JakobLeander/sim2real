@@ -27,7 +27,7 @@
   </sensor>
   <worldbody>
     <camera name="fixed" pos="0 0 3.0" quat="1 0 0 0" />
-    <camera name="cam0" pos="0 -2 1.6" xyaxes="1 0 0 0 1 2" />
+    <camera name="cam0" pos="0 -4 3.2" xyaxes="1 0 0 0 1 2" />
 
 
     <geom type="plane" size="3 3 .01" material="grid" />
