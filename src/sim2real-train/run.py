@@ -17,7 +17,7 @@ class RobotRunner:
         robot_xml_path = epath.Path(__file__).parent / "xmls/robot.xml"
         self.model = mujoco.MjModel.from_xml_string(robot_xml_path.read_text())
 
-        self.sim_dt = 0.02
+        self.sim_dt = 0.002
         self.decimation = 10
         self.model.opt.timestep = self.sim_dt
         self.data = mujoco.MjData(self.model)

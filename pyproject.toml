@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sim2real-train"
 version = "0.1.0"
-description = "Simulation to Reality Training Framework"
+description = "Simulation to Reality Demonstration"
 readme = "README.md"
 requires-python = ">=3.12.3"
 license = {text = "LICENSE"}
@@ -22,6 +22,7 @@ dependencies = [
     "ml_collections",
     "mujoco-mjx",
     "mujoco>=3.5.1.dev879036130",
+    "onnxruntime",
     "warp-lang>=1.11",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
