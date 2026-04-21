@@ -2,6 +2,7 @@
 Run the trained policy in a simulator
 """
 
+from typing import Any, Dict, Optional, Union
 import mujoco
 import pickle
 import numpy as np
@@ -21,6 +22,33 @@ class RobotRunner:
         self.model.opt.timestep = self.sim_dt
         self.data = mujoco.MjData(self.model)
         mujoco.mj_step(self.model, self.data)
+
+        # Build sensor lookup tables (version‑safe)
+        self.sensor_adr: Dict[str, int] = {}
+        self.sensor_dim: Dict[str, int] = {}
+
+        names_buf = self.model.names
+
+        if hasattr(self.model, "sensor_nameadr"):
+            nameadr = self.model.sensor_nameadr
+        elif hasattr(self.model, "name_sensoradr"):
+            nameadr = self.model.name_sensoradr
+        else:
+            raise RuntimeError("MuJoCo model has no sensor name address field.")
+
+        for i in range(self.model.nsensor):
+            adr = nameadr[i]
+            name_bytes = names_buf[adr:].split(b"\x00", 1)[0]
+            name = name_bytes.decode("utf-8")
+
+            self.sensor_adr[name] = self.model.sensor_adr[i]
+            self.sensor_dim[name] = self.model.sensor_dim[i]
+
+    # -------------------- Sensor helper --------------------
+    def sensor(self, data, name: str):
+        idx = self.sensor_adr[name]
+        dim = self.sensor_dim[name]
+        return data.sensordata[idx : idx + dim]
 
     def key_callback(self, keycode):
         print(f"key: {keycode}")
