@@ -15,6 +15,7 @@ dependencies = [
     "brax",
     "etils",
     "flax",
+    "framesviewer==1.0.2",
     "jax[cuda12]",
     "lxml",
     "mediapy",
