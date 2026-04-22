@@ -20,11 +20,13 @@ dependencies = [
     "mujoco-mjx",
     "mujoco==3.7.0",
     "onnxruntime==1.24.4",
+    "onnxoptimizer==0.4.2",
     "orbax-checkpoint==0.11.36",
     "tqdm==4.67.3",
     "torch==2.11.0",
     "jax2onnx==0.12.5",
     "warp-lang==1.12.1",
+    "onnxoptimizer>=0.4.2",
 ]
 
 [project.optional-dependencies]

@@ -1720,6 +1720,20 @@ wheels = [
 ]
 
 [[package]]
+name = "onnxoptimizer"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "onnx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/a7/e4f0e67a7e077d7cc65b968febfc53f8f52d3a22257624aa7977f14fff8c/onnxoptimizer-0.4.2.tar.gz", hash = "sha256:dac4a972b5dc80a870b930e85e4b043d090d4546d7878106ef8448e07f94622e", size = 12062394, upload-time = "2026-01-07T14:24:39.048Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/e9/bedd490a39b5201d33aea1f2812ca74bba9b30defa66fc94e3d46878b8b8/onnxoptimizer-0.4.2-cp312-abi3-macosx_10_15_universal2.whl", hash = "sha256:7229ffe7d54c692e4ba0a2516f94805a4f462e7fce7634e080a381fb82ec2378", size = 1217661, upload-time = "2026-01-07T14:24:34.475Z" },
+    { url = "https://files.pythonhosted.org/packages/85/3e/d512bf70a66f85d3d7bfc79380da24c026d6409b28c5cd48f2d91e450046/onnxoptimizer-0.4.2-cp312-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:af19ee4dd7a852a18511aeabdbe1e3c8b4dd8e02b187356965b269d480ac7147", size = 1016175, upload-time = "2026-01-07T14:24:36.265Z" },
+    { url = "https://files.pythonhosted.org/packages/67/c1/173031e8e5f9185a168209ead6f8b5e985f951a817d7b7b9c62a335a1a33/onnxoptimizer-0.4.2-cp312-abi3-win_amd64.whl", hash = "sha256:cc85d031f35689d36d91e79770611015014c41278fd39b664c6ccc27dc045aa0", size = 486848, upload-time = "2026-01-07T14:24:37.57Z" },
+]
+
+[[package]]
 name = "onnxruntime"
 version = "1.24.4"
 source = { registry = "https://pypi.org/simple" }
@@ -2210,6 +2224,7 @@ dependencies = [
     { name = "ml-collections" },
     { name = "mujoco" },
     { name = "mujoco-mjx" },
+    { name = "onnxoptimizer" },
     { name = "onnxruntime" },
     { name = "orbax-checkpoint" },
     { name = "torch" },
@@ -2236,6 +2251,8 @@ requires-dist = [
     { name = "ml-collections", specifier = "==1.1.0" },
     { name = "mujoco", specifier = "==3.7.0" },
     { name = "mujoco-mjx" },
+    { name = "onnxoptimizer", specifier = "==0.4.2" },
+    { name = "onnxoptimizer", specifier = ">=0.4.2" },
     { name = "onnxruntime", specifier = "==1.24.4" },
     { name = "orbax-checkpoint", specifier = "==0.11.36" },
     { name = "pytest", marker = "extra == 'dev'" },

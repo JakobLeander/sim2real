@@ -73,6 +73,30 @@ def export_to_onnx(jax_policy, obs_shape, onnx_path):
 
     print(f"✅ ONNX saved to {onnx_path}")
 
+    # Optimize the ONNX model for faster inference
+    optimize_onnx_model(onnx_path)
+
+
+# =========================================================
+# Optimize ONNX model for inference
+# =========================================================
+def optimize_onnx_model(onnx_path):
+    import onnx
+    from onnxoptimizer import optimize
+
+    print("\n⚡ Optimizing ONNX model for faster inference...")
+
+    # Load the model
+    model = onnx.load(str(onnx_path))
+
+    # Optimize the model
+    optimized_model = optimize(model)
+
+    # Save the optimized model back
+    onnx.save(optimized_model, str(onnx_path))
+
+    print(f"✅ Optimized ONNX saved to {onnx_path}")
+
 
 # =========================================================
 # Validation: JAX vs ONNX
@@ -80,7 +104,14 @@ def export_to_onnx(jax_policy, obs_shape, onnx_path):
 def validate(onnx_path, jax_policy, obs_shape):
     print("\n🧪 Running validation...")
 
-    session = ort.InferenceSession(str(onnx_path))
+    # Optimize session for inference
+    sess_options = ort.SessionOptions()
+    sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    sess_options.execution_mode = (
+        ort.ExecutionMode.ORT_SEQUENTIAL
+    )  # Suitable for Raspberry Pi
+
+    session = ort.InferenceSession(str(onnx_path), sess_options=sess_options)
     input_name = session.get_inputs()[0].name
 
     errors = []
