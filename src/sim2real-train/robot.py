@@ -18,7 +18,7 @@ _XML_PATH = epath.Path(__file__).parent / "xmls/robot.xml"
 
 def default_config() -> config_dict.ConfigDict:
     return config_dict.create(
-        ctrl_dt=0.02,
+        ctrl_dt=0.01,
         sim_dt=0.002,
         episode_length=1000,
         action_repeat=1,

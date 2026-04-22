@@ -211,3 +211,4 @@ __marimo__/
 
 # mp4 files (training videos)
 *.mp4
+*.onnx

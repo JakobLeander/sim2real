@@ -79,9 +79,17 @@ def progress(num_steps, metrics):
 
 def main():
     debug = False
+    policies_dir = epath.Path("policies")
+    policies_dir.mkdir(parents=True, exist_ok=True)
+
     configure_mujoco()
 
     print(f"Default GPU: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+
+    # empty policies folder
+    for file in policies_dir.iterdir():
+        if file.is_file():
+            file.unlink()
 
     env_cfg = robot.default_config()
     print(f"Environment config:\n{env_cfg}")
@@ -121,9 +129,10 @@ def main():
     print(f"time to jit: {times[1] - times[0]}")
     print(f"time to train: {times[-1] - times[1]}")
 
+    # -----------------------------
+    # 🔬 Save trained model
+    # -----------------------------
     # Save the trained policy and training metrics
-    policies_dir = epath.Path("policies")
-    policies_dir.mkdir(parents=True, exist_ok=True)
     policy_file_name = policies_dir / f"robot_policy.pkl"
 
     with open(f"{policy_file_name}", "wb") as f:
