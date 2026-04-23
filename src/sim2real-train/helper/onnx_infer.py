@@ -2,12 +2,11 @@ import onnxruntime
 
 
 class OnnxInfer:
-    def __init__(self, onnx_model_path, input_name="obs", awd=False):
-        self.onnx_model_path = onnx_model_path
+    def __init__(self, onnx_model_path, awd=False):
         self.ort_session = onnxruntime.InferenceSession(
-            self.onnx_model_path, providers=["CPUExecutionProvider"]
+            onnx_model_path, providers=["CPUExecutionProvider"]
         )
-        self.input_name = input_name
+        self.input_name = self.ort_session.get_inputs()[0].name
         self.awd = awd
 
     def infer(self, inputs):

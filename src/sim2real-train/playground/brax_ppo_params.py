@@ -26,7 +26,7 @@ def brax_ppo_config(episode_length) -> config_dict.ConfigDict:
         num_evals=10,
         reward_scaling=10.0,
         episode_length=episode_length,
-        normalize_observations=True,
+        normalize_observations=False,
         action_repeat=1,
         unroll_length=30,
         num_minibatches=32,

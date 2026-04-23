@@ -162,20 +162,47 @@ class Robot(mjx_env.MjxEnv):
     # -------------------- Reward --------------------
 
     def _get_reward(self, data, action, info, metrics) -> jax.Array:
+        """
+        Compute the reward signal for the robot control task.
+
+        The reward encourages:
+        1. Keeping the robot upright (pitch angle close to 0)
+        2. Minimizing angular velocity (smooth motion)
+        3. Staying near the origin (don't drift away)
+        4. Using minimal control effort (energy efficiency)
+
+        Returns:
+            Total reward as the sum of four weighted reward components
+        """
+        # Extract pitch angle from quaternion (qpos[3:7] = [qw, qx, qy, qz])
         q = data.qpos[3:7]
         qw, qx, qy, qz = q
+        # sin(pitch) = 2 * (qw*qy - qz*qx) using quaternion formula
         sinp = 2 * (qw * qy - qz * qx)
         theta = jp.arcsin(jp.clip(sinp, -1.0, 1.0))
 
+        # Get angular velocity from IMU gyroscope sensor (y-axis = pitch rate)
         gyro = self._sensor(data, "gyro")
         theta_dot = gyro[1]
 
+        # Extract x position and primary control input
         x = data.qpos[0]
         u = action[0]
 
+        # Reward component 1: Penalize large pitch angles (encourages upright)
+        # Gaussian penalty with scale 8.0, max reward = 1.0 at theta = 0
         r_theta = jp.exp(-8.0 * theta**2)
+
+        # Reward component 2: Penalize excessive angular velocity (smooth motion)
+        # Scaled to ~20% of theta reward, encourages damped motion
         r_thetadot = 0.2 * jp.exp(-0.1 * theta_dot**2)
-        r_x = 0.1 * jp.exp(-0.5 * x**2)
+
+        # Reward component 3: Penalize drift from center position (stay at origin)
+        # Increased from 0.1 to 0.5 and scale from 0.5 to 2.0 for stronger centering
+        r_x = 0.5 * jp.exp(-2.0 * x**2)
+
+        # Reward component 4: Penalize control effort (energy efficiency)
+        # Negative reward for non-zero actions, encourages passive balancing
         r_u = -0.001 * (u**2)
 
         return r_theta + r_thetadot + r_x + r_u

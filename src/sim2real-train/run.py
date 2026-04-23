@@ -7,14 +7,17 @@ import mujoco
 import pickle
 import numpy as np
 import mujoco
-import mujoco.viewer
+import mujoco.viewer as viewer
 import time
 from etils import epath
+from warp import jax
+from helper.onnx_infer import OnnxInfer
 
 
 class RobotRunner:
     def __init__(self):
         robot_xml_path = epath.Path(__file__).parent / "xmls/robot.xml"
+        onnx_policy_path = "policies/robot_policy.onnx"
         self.model = mujoco.MjModel.from_xml_string(robot_xml_path.read_text())
 
         self.sim_dt = 0.002
@@ -22,6 +25,8 @@ class RobotRunner:
         self.model.opt.timestep = self.sim_dt
         self.data = mujoco.MjData(self.model)
         mujoco.mj_step(self.model, self.data)
+
+        self.policy = OnnxInfer(onnx_policy_path, awd=True)
 
         # Build sensor lookup tables (version‑safe)
         self.sensor_adr: Dict[str, int] = {}
@@ -53,23 +58,34 @@ class RobotRunner:
     def key_callback(self, keycode):
         print(f"key: {keycode}")
 
+    def get_obs(self, data):
+        qpos = data.qpos[:7]
+        qvel = data.qvel[:6]
+
+        gyro = self.sensor(data, "gyro")
+        accel = self.sensor(data, "accelerometer")
+        linvel = self.sensor(data, "local_linvel")
+
+        return np.concatenate([qpos, qvel, gyro, accel, linvel])
+
     def run(self):
-        with mujoco.viewer.launch_passive(
-            self.model,
-            self.data,
-            show_left_ui=True,
-            show_right_ui=True,
-            key_callback=self.key_callback,
-        ) as viewer:
+        with viewer.launch_passive(self.model, self.data) as v:
             counter = 0
-            while True:
+            while v.is_running():
                 step_start = time.time()
 
                 mujoco.mj_step(self.model, self.data)
 
                 counter += 1
+                obs = self.get_obs(self.data)
 
-                viewer.sync()
+                # print("OBS:", type(obs), obs.shape, obs)
+
+                action = self.policy.infer(obs)
+
+                self.data.ctrl[:] = action
+
+                v.sync()
 
                 time_until_next_step = self.model.opt.timestep - (
                     time.time() - step_start
