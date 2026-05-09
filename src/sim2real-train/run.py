@@ -20,13 +20,14 @@ class RobotRunner:
         onnx_policy_path = "policies/robot_policy.onnx"
         self.model = mujoco.MjModel.from_xml_string(robot_xml_path.read_text())
 
-        self.sim_dt = 0.002
-        self.decimation = 10
+        self.sim_dt = 0.001  # physics runs at 1000 hz
         self.model.opt.timestep = self.sim_dt
         self.data = mujoco.MjData(self.model)
         mujoco.mj_step(self.model, self.data)
 
         self.policy = OnnxInfer(onnx_policy_path, awd=True)
+
+        self.nudge = False
 
         # Build sensor lookup tables (version‑safe)
         self.sensor_adr: Dict[str, int] = {}
@@ -56,7 +57,8 @@ class RobotRunner:
         return data.sensordata[idx : idx + dim]
 
     def key_callback(self, keycode):
-        print(f"key: {keycode}")
+        self.nudge = True
+        print("Nudge!")
 
     def get_obs(self, data):
         qpos = data.qpos[:7]
@@ -69,21 +71,33 @@ class RobotRunner:
         return np.concatenate([qpos, qvel, gyro, accel, linvel])
 
     def run(self):
-        with viewer.launch_passive(self.model, self.data) as v:
+        with viewer.launch_passive(
+            self.model, self.data, key_callback=self.key_callback
+        ) as v:
+
             counter = 0
+            nudge_counter = 0
             while v.is_running():
                 step_start = time.time()
 
                 mujoco.mj_step(self.model, self.data)
 
                 counter += 1
-                obs = self.get_obs(self.data)
 
-                # print("OBS:", type(obs), obs.shape, obs)
+                # our action loop runs at 100 hz, so we only infer every 10 steps
+                if counter % 10 == 0:
+                    obs = self.get_obs(self.data)
+                    action = self.policy.infer(obs)
 
-                action = self.policy.infer(obs)
+                    if self.nudge:
+                        nudge_counter += 1
+                        action += np.random.uniform(0.5, 1.0, size=action.shape)
+                        if nudge_counter > 10:
+                            self.nudge = False
+                            nudge_counter = 0
 
-                self.data.ctrl[:] = action
+                    self.data.ctrl[:] = action
+                    counter = 0
 
                 v.sync()
 
