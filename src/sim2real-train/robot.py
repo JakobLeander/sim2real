@@ -96,8 +96,8 @@ class Robot(mjx_env.MjxEnv):
         norm = jp.sqrt(qw * qw + qx * qx + qy * qy + qz * qz)
         qpos = qpos.at[3:7].set(jp.array([qw, qx, qy, qz]) / norm)
 
-        # ensure above floor (car body pos="0 0 .4" in XML)
-        qpos = qpos.at[2].set(0.4)
+        # ensure above floor (car body pos="0 0 .06" in XML)
+        qpos = qpos.at[2].set(0.06)
 
         # Warp: make_data uses MjModel
         data = mjx_env.make_data(
@@ -122,17 +122,21 @@ class Robot(mjx_env.MjxEnv):
     # -------------------- Step --------------------
 
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+
+        # Normalize velociy so it is -1 to 1 for training stability (and to match action range)
+        max_velocity = 20.0
+        scaled_action = max_velocity * action
+        scaled_action = jp.clip(scaled_action, -max_velocity, max_velocity)
+
         # physics step with mjx.Model
         next_data = mjx_env.step(
             self._mjx_model,
             state.data,
-            action,
+            scaled_action,
             self.n_substeps,
         )
 
-        reward = self._get_reward(next_data, action, state.info, state.metrics)
-        obs = self._get_obs(next_data, state.info)
-
+        # Determine if robot has fallen over (based on pitch angle) or if there are NaNs in the state (indicating instability)
         # pitch angle
         q = next_data.qpos[3:7]
         qw, qx, qy, qz = q
@@ -142,6 +146,12 @@ class Robot(mjx_env.MjxEnv):
         fallen = jp.abs(theta) > jp.deg2rad(30)
         nan_fail = jp.isnan(next_data.qpos).any() | jp.isnan(next_data.qvel).any()
         done = (fallen | nan_fail).astype(float)
+
+        # SAFETY: stop motors if fallen
+        scaled_action = jp.where(fallen, jp.zeros_like(scaled_action), scaled_action)
+
+        reward = self._get_reward(next_data, scaled_action, state.info, state.metrics)
+        obs = self._get_obs(next_data, state.info)
 
         reward = reward - 5.0 * fallen
 

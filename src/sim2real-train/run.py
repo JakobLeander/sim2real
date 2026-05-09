@@ -89,9 +89,13 @@ class RobotRunner:
                     obs = self.get_obs(self.data)
                     action = self.policy.infer(obs)
 
+                    # since we normalized actions during training, we need to unnormalize them here
+                    max_velocity = 20.0
+                    action = max_velocity * action
+
                     if self.nudge:
                         nudge_counter += 1
-                        action += np.random.uniform(0.5, 1.0, size=action.shape)
+                        action += np.random.uniform(10.0, 10.0, size=action.shape)
                         if nudge_counter > 10:
                             self.nudge = False
                             nudge_counter = 0

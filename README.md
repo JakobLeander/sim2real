@@ -46,3 +46,12 @@ pytest
 ## License
 
 See [LICENSE](LICENSE) file for details.
+
+## Robot Hardware
+DRV8825 stepper driver
+Stepper motor mecury sm24byg011-2s, 2 phase, 1.8 grad step
+Model as velocity motor
+in real robot convert velocity to steps
+kv=0.4: how stiff motor is
+forcerange = -0.23 0.23 the same as the nm on motor
+ctrlrange -20 20: rad/second = 

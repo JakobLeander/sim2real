@@ -67,6 +67,6 @@
   </tendon>
 
   <actuator>
-    <motor name="motor" tendon="drive" ctrlrange="-1 1" gear=".2" />
+    <velocity name="motor" tendon="drive" ctrlrange="-20 20" kv=".4" forcerange="-0.46 0.46" />
   </actuator>
 </mujoco>
