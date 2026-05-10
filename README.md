@@ -54,4 +54,7 @@ Model as velocity motor
 in real robot convert velocity to steps
 kv=0.4: how stiff motor is
 forcerange = -0.23 0.23 the same as the nm on motor
-ctrlrange -20 20: rad/second = 
+ctrlrange -20 20: rad/second 
+
+For real robot calculate drift by counting stepper pulses
+for mujoco drift is in meters

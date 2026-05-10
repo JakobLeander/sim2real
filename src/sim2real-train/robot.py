@@ -1,7 +1,9 @@
 from typing import Any, Dict, Optional, Union
 
+from flax.nnx import data, state
 import jax
 import jax.numpy as jp
+from jax.random import key
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
@@ -160,14 +162,25 @@ class Robot(mjx_env.MjxEnv):
     # -------------------- Observation --------------------
 
     def _get_obs(self, data, info) -> jax.Array:
-        qpos = data.qpos[:7]
-        qvel = data.qvel[:6]
+        # TODO: Add noise to observations
+        # TODO: Only sample sensors at 100hz
 
         gyro = self._sensor(data, "gyro")
-        accel = self._sensor(data, "accelerometer")
-        linvel = self._sensor(data, "local_linvel")
+        pitch_rate = gyro[1]  # pitch rate (y-axis)
 
-        return jp.concatenate([qpos, qvel, gyro, accel, linvel])
+        # Quaternion (orientation)
+        q = data.qpos[3:7]
+        qw, qx, qy, qz = q
+
+        # Compute pitch angle from quaternion (same as in reward)
+        sinp = 2 * (qw * qy - qz * qx)
+        pitch_angle = jp.arcsin(jp.clip(sinp, -1.0, 1.0))  # pitch angle
+
+        drift = data.qpos[0]
+        x_dot = data.qvel[0]
+
+        # only return data robot actually has available
+        return jp.array([pitch_angle, pitch_rate, drift, x_dot])
 
     # -------------------- Reward --------------------
 
@@ -197,6 +210,7 @@ class Robot(mjx_env.MjxEnv):
 
         # Extract x position and primary control input
         x = data.qpos[0]
+        x_dot = data.qvel[0]  # <--- ADD THIS
         u = action[0]
 
         # Reward component 1: Penalize large pitch angles (encourages upright)
@@ -205,17 +219,20 @@ class Robot(mjx_env.MjxEnv):
 
         # Reward component 2: Penalize excessive angular velocity (smooth motion)
         # Scaled to ~20% of theta reward, encourages damped motion
-        r_thetadot = 0.2 * jp.exp(-0.1 * theta_dot**2)
+        r_thetadot = 0.4 * jp.exp(-0.1 * theta_dot**2)
 
         # Reward component 3: Penalize drift from center position (stay at origin)
         # Increased from 0.1 to 0.5 and scale from 0.5 to 2.0 for stronger centering
         r_x = 0.5 * jp.exp(-2.0 * x**2)
 
+        # NEW: Penalize cart velocity (critical damping term)
+        r_xdot = 0.6 * jp.exp(-1.0 * x_dot**2)  # <--- ADD THIS
+
         # Reward component 4: Penalize control effort (energy efficiency)
         # Negative reward for non-zero actions, encourages passive balancing
         r_u = -0.001 * (u**2)
 
-        return r_theta + r_thetadot + r_x + r_u
+        return r_theta + r_thetadot + r_x + r_xdot + r_u
 
     # -------------------- Properties --------------------
 

@@ -61,14 +61,21 @@ class RobotRunner:
         print("Nudge!")
 
     def get_obs(self, data):
-        qpos = data.qpos[:7]
-        qvel = data.qvel[:6]
+        # Quaternion (orientation)
+        q = data.qpos[3:7]
+        qw, qx, qy, qz = q
+
+        # Compute pitch angle from quaternion (same as in reward)
+        sinp = 2 * (qw * qy - qz * qx)
+        pitch_angle = np.arcsin(np.clip(sinp, -1.0, 1.0))  # pitch angle
+
+        drift = data.qpos[0]
+        x_dot = data.qvel[0]
 
         gyro = self.sensor(data, "gyro")
-        accel = self.sensor(data, "accelerometer")
-        linvel = self.sensor(data, "local_linvel")
+        pitch_rate = gyro[1]  # pitch rate (y-axis)
 
-        return np.concatenate([qpos, qvel, gyro, accel, linvel])
+        return [pitch_angle, pitch_rate, drift, x_dot]
 
     def run(self):
         with viewer.launch_passive(

@@ -99,6 +99,16 @@ def main():
     # Set PPO Params
     ppo_params = brax_ppo_params.brax_ppo_config(env_cfg.episode_length)
 
+    # PPO overrides recommended by Copilot for balancing robot
+    # ppo_params.reward_scaling = 10.0
+    ppo_params.learning_rate = 0.0003
+    # ppo_params.entropy_cost = 1e-3
+    # ppo_params.normalize_observations = True
+    # ppo_params.unroll_length = 60
+    # ppo_params.num_minibatches = 8
+    # ppo_params.num_updates_per_batch = 4
+    # ppo_params.batch_size = 1024
+
     # Very fast parameters for debugging, not meant to produce good results, just to check that the training loop runs.
     if debug:
         ppo_params = brax_ppo_params.brax_ppo_config_debug()

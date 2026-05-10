@@ -21,7 +21,7 @@
   <default>
     <joint damping=".03" actuatorfrcrange="-5 5" />
     <default class="wheel">
-      <geom type="cylinder" size=".05 .01" rgba=".5 .5 1 1" mass="0.03" />
+      <geom type="cylinder" size=".05 .01" rgba=".5 .5 1 1" mass="0.03" friction="1.2 0.005 0.0001" />
     </default>
   </default>
   <sensor>
@@ -37,7 +37,7 @@
 
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1"
       conaffinity="0"
-      priority="1" friction="0.6" condim="3" />
+      priority="1" friction="1.0" condim="3" />
     <body name="car" pos="0 0 .06">
       <freejoint />
       <geom name="wheelbox" type="box" size=".03 .06 .03" mass="0.6" rgba="1 1 1 1" />
