@@ -119,11 +119,22 @@ class Robot(mjx_env.MjxEnv):
         done = jp.array(0.0)
         obs = self._get_obs(data, info)
 
+        # Set custom variables in info for handling 100hz gyro reads
+        info["last_obs"] = obs
+        info["obs_count"] = 0
+
         return mjx_env.State(data, obs, reward, done, metrics, info)
 
     # -------------------- Step --------------------
 
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+
+        # increment observation counter to track when to read gyro (every 10 steps since sim_dt=0.002 and ctrl_dt=0.01)
+        counter = state.info.get("obs_counter", 0) + 1
+        counter = counter % 10  # 10 physics steps = 100 Hz
+
+        # update info
+        info = {"obs_counter": counter}
 
         # Normalize velociy so it is -1 to 1 for training stability (and to match action range)
         max_velocity = 20.0
@@ -163,8 +174,13 @@ class Robot(mjx_env.MjxEnv):
 
     def _get_obs(self, data, info) -> jax.Array:
         # TODO: Add noise to observations
-        # TODO: Only sample sensors at 100hz
 
+        counter = info.get("obs_counter", 0)
+        # Only sample sensors every 10th physics step (100 Hz)
+        if counter != 0:
+            return info.get("last_obs")  # return previous observation
+
+        # fetch real sensor values now at 100 hz
         gyro = self._sensor(data, "gyro")
         pitch_rate = gyro[1]  # pitch rate (y-axis)
 
@@ -178,9 +194,11 @@ class Robot(mjx_env.MjxEnv):
 
         drift = data.qpos[0]
         x_dot = data.qvel[0]
+        obs = jp.array([pitch_angle, pitch_rate, drift, x_dot])
+        info["last_obs"] = obs
 
         # only return data robot actually has available
-        return jp.array([pitch_angle, pitch_rate, drift, x_dot])
+        return obs
 
     # -------------------- Reward --------------------
 

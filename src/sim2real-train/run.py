@@ -91,7 +91,7 @@ class RobotRunner:
 
                 counter += 1
 
-                # our action loop runs at 100 hz, so we only infer every 10 steps
+                # our action loop runs at 1000 hz, so we only infer every 10 steps to simular physical sensor readings at 100 hz (gyro is the limiting factor since it runs at 100 hz in real life)
                 if counter % 10 == 0:
                     obs = self.get_obs(self.data)
                     action = self.policy.infer(obs)
