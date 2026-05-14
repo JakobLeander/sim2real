@@ -84,6 +84,10 @@ class RobotRunner:
 
             counter = 0
             nudge_counter = 0
+
+            # print observation size
+            print(f"Observation size: {len(self.get_obs(self.data))}")
+
             while v.is_running():
                 step_start = time.time()
 
