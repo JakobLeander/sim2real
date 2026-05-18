@@ -1,8 +1,8 @@
 """
 Stepper Motor interface for controlling a stepper motor.
 
-This module provides an interface to control a stepper motor via UART.
 # Tested with motor SM-42BYG011-25 from Mercury using a DRV8825 stepper driver.
+# Using pippio hardware PWM for better performance and smoother motion.
 # The pigpio daemon must be running
 # sudo pigpiod
 
@@ -18,7 +18,7 @@ import sys
 import math
 import pigpio
 
-# Degrees per step for motor is 1.8 degree. No Microstepping
+# Degrees per step for motor is 1.8 degree  with 1/4 microstepping, we get 0.45 degree per step
 RAD_PER_STEP = 1.8 * math.pi / 180/4  # 4 microsteps per step (1/4 microstepping)
 
 # Max speed in rad/second
@@ -80,6 +80,8 @@ class StepperMotor:
         # pigpio hardware PWM:
         # frequency = steps per second
         # dutycycle = 500000 (50%)
+        # TODO: Likely add acceleration ramping for smoother motion using a separate thread to update the speed gradually instead of instant changes
+        # might not be needed for robot with microstepping and relatively low motor speeds
         self.pi.hardware_PWM(self._step_pin, int(steps_per_sec), 500000)
 
 def main():

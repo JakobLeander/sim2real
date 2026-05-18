@@ -9,19 +9,33 @@ class RobotRunner:
     DT = 1/CONTROL_RATE_HZ
 
     def __init__(self, backend: str = "gpio"):
-        if backend == "gpio":
+        if backend == "real":
             self.robot_control = RobotControlGPIO()
         elif backend == "sim":
             self.robot_control = RobotControlSim()
         else:
             raise ValueError(f"Unknown backend: {backend}. Supported backends: 'gpio', 'sim'")
+        
+        self._fps_count = 0
+        self._fps_time_start = time.time()
+        self._fps_elapsed = 0.0
+        self.fps=0.0
 
     def write_debug(self, text: str):
         print(text, flush=True, end="\r")
 
+    def calculate_fps(self):
+        self._fps_count += 1
+        self._fps_elapsed = time.time() - self._fps_time_start
+        if self._fps_elapsed >= 1.0:
+            self.fps = self._fps_count / self._fps_elapsed
+            self._fps_count = 0
+            self._fps_time_start = time.time()
+            self.write_debug(f"FPS: {self.fps:.2f}")
+
     def update(self):
-        # TODO: Update robot state and control logic here
-        pass
+        
+        pitch_angle = self.robot_control.get_pitch_angle()
 
 
     def run(self):
@@ -34,30 +48,17 @@ class RobotRunner:
             self.robot_control.start_robot()
 
             while True:
-                now = time.perf_counter()
-
-                if now>=next_time:
+                if time.perf_counter()>=next_time:
                     self.update()  # Update robot state
-
-                    fps_count += 1
-                    fps_elapsed = time.time() - fps_time_start
-                    if fps_elapsed >= 1.0:
-                        fps = fps_count / fps_elapsed
-                        self.write_debug(f"Control loop FPS: {fps:.1f} Hz")
-                        fps_count = 0
-                        fps_time_start = time.time()
+                    self.calculate_fps()
 
                     next_time += self.DT
-                time.sleep(0.001)                
-                
-                
-
-
+                    time.sleep(0.001)            
         finally:
             self.robot_control.stop_robot()
             print("\nRobot stopped. Exiting.")
 
 if __name__ == "__main__":
-    runner = RobotRunner(backend="sim")  # Change to "sim" for simulation or "gpio" for real hardware
+    runner = RobotRunner(backend="real")  # Change to "sim" for simulation or "gpio" for real hardware
     runner.run()
 

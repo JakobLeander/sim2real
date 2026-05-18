@@ -13,3 +13,6 @@ class RobotControlSim(RobotControl):
     def stop_robot(self):
         print("Stopping robot in simulation...")
 
+    def set_speed(self, speed: float):
+        print(f"Setting robot speed to {speed} rad/s in simulation...")
+

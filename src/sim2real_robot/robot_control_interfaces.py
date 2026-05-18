@@ -43,3 +43,13 @@ class RobotControl(ABC):
         This method shuts down the robot and releases any resources it is using.
         """
         pass
+
+    @abstractmethod
+    def set_speed(self, speed: float):
+        """
+        Set the speed of the robot in rad/second.
+
+        Args:
+            speed (float): The speed at which to operate the robot.
+        """
+        pass
