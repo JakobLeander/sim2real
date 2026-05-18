@@ -34,6 +34,7 @@ class StepperMotor:
         self._dir_pin = dir_pin
         self._enable_pin = enable_pin
         self._reverse_direction = reverse_direction
+        self.speed=0.0
 
         self.pi = pigpio.pi()
         if not self.pi.connected:
@@ -61,6 +62,7 @@ class StepperMotor:
     def set_speed(self, speed_rad_per_sec):
         # Clamp speed
         speed = max(-MAX_SPEED, min(speed_rad_per_sec, MAX_SPEED))
+        self.speed = speed
 
         # Set direction
         direction = 1 if speed >= 0 else -1
@@ -70,12 +72,12 @@ class StepperMotor:
         self.pi.write(self._dir_pin, 1 if direction > 0 else 0)
 
         # Convert rad/s → steps/s
-        speed = abs(speed)
-        if speed == 0:
+        abs_speed = abs(speed)
+        if abs_speed == 0:
             self.pi.hardware_PWM(self._step_pin, 0, 0)
             return
 
-        steps_per_sec = speed / RAD_PER_STEP
+        steps_per_sec = abs_speed / RAD_PER_STEP
 
         # pigpio hardware PWM:
         # frequency = steps per second

@@ -29,6 +29,17 @@ class RobotControl(ABC):
         pass
 
     @abstractmethod
+    def get_pitch_velocity(self) -> float:
+        """
+        Get the current pitch velocity of the robot.
+
+        Returns:
+            float: The pitch velocity in radians/second, where positive values indicate
+                   increasing forward tilt and negative values indicate increasing backward tilt.
+        """
+        pass
+
+    @abstractmethod
     def start_robot(self):
         """
         Start the robot.
@@ -51,5 +62,12 @@ class RobotControl(ABC):
 
         Args:
             speed (float): The speed at which to operate the robot.
+        """
+        pass
+
+    @abstractmethod
+    def get_velocity(self)-> float:
+        """
+        Get the current velocity of the robot in meters/second
         """
         pass

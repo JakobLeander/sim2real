@@ -2,17 +2,19 @@ from email import parser
 
 import onnxruntime
 
-
 class OnnxInfer:
-    def __init__(self, onnx_model_path, awd=False):
+    ONNX_POLICY_PATH = "policies/robot_policy.onnx"
+    OBS_SIZE = 4
+    AWD=True
+    
+    def __init__(self):
         self.ort_session = onnxruntime.InferenceSession(
-            onnx_model_path, providers=["CPUExecutionProvider"]
+            self.ONNX_POLICY_PATH, providers=["CPUExecutionProvider"]
         )
         self.input_name = self.ort_session.get_inputs()[0].name
-        self.awd = awd
 
     def infer(self, inputs):
-        if self.awd:
+        if self.AWD:
             outputs = self.ort_session.run(None, {self.input_name: [inputs]})
             return outputs[0][0]
         else:
@@ -27,18 +29,17 @@ if __name__ == "__main__":
     import numpy as np
     import time
 
-    onnx_policy_path = "policies/robot_policy.onnx"
-
-    obs_size = 4  # TODO: get this from the model instead of hardcoding
-
-    oi = OnnxInfer(onnx_policy_path, awd=True)
+    oi = OnnxInfer()
     times = []
     for i in range(1000):
-        inputs = np.random.uniform(size=obs_size).astype(np.float32)
+        inputs = np.random.uniform(size=OnnxInfer.OBS_SIZE).astype(np.float32)
         # inputs = np.arange(obs_size).astype(np.float32)
         # print(inputs)
         start = time.time()
-        print(oi.infer(inputs))
+        action = oi.infer(inputs)
+        
+        print("type:", type(action))
+        print(float(action[0]))
         times.append(time.time() - start)
 
     print("Average time: ", sum(times) / len(times))

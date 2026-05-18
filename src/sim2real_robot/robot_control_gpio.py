@@ -42,3 +42,16 @@ class RobotControlGPIO(RobotControl):
         self._left_motor.set_speed(speed)  # Set speed for left motor
         self._right_motor.set_speed(speed)  # Set speed for right motor
 
+    def get_velocity(self):
+        # Get velocity of robot in meters/second based on motor speeds and robot kinematics
+        motor_speed_rad_per_sec = (self._left_motor.speed + self._right_motor.speed) / 2  # Average speed of both motors
+        wheel_radius = .0053  # Wheel radius in meters
+        velocity = motor_speed_rad_per_sec * wheel_radius
+
+        return velocity
+    
+    def get_pitch_velocity(self) -> float:
+        # Implement GPIO-based method to read pitch velocity
+        # Placeholder implementation
+        pitch_velocity = self._imu.pitch_velocity  # Get pitch velocity from IMU
+        return pitch_velocity

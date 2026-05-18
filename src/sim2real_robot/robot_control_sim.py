@@ -16,3 +16,8 @@ class RobotControlSim(RobotControl):
     def set_speed(self, speed: float):
         print(f"Setting robot speed to {speed} rad/s in simulation...")
 
+    def get_velocity(self):
+        return 0.0  # Placeholder for simulated velocity
+
+    def get_pitch_velocity(self) -> float:
+        return 0.0  # Placeholder for simulated pitch velocity
