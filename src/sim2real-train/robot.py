@@ -1,9 +1,7 @@
 from typing import Any, Dict, Optional, Union
 
-from flax.nnx import data, state
 import jax
 import jax.numpy as jp
-from jax.random import key
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
@@ -26,7 +24,7 @@ def default_config() -> config_dict.ConfigDict:
         action_repeat=1,
         vision=False,
         impl="warp",
-        naconmax=8192,
+        naconmax=16384,  # needs ≥10996 per broadphase warning; 16384 gives headroom
         njmax=512,
     )
 
@@ -117,11 +115,9 @@ class Robot(mjx_env.MjxEnv):
         info: Dict[str, Any] = {}
         reward = jp.array(0.0)
         done = jp.array(0.0)
-        obs = self._get_obs(data, info)
+        info["last_u"] = jp.zeros(1)  # shape [1] to match action shape
 
-        # Set custom variables in info for handling 100hz gyro reads
-        info["last_obs"] = obs
-        info["obs_count"] = 0
+        obs = self._get_obs(data, info["last_u"])
 
         return mjx_env.State(data, obs, reward, done, metrics, info)
 
@@ -129,25 +125,25 @@ class Robot(mjx_env.MjxEnv):
 
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
-        # increment observation counter to track when to read gyro (every 10 steps since sim_dt=0.002 and ctrl_dt=0.01)
-        counter = state.info.get("obs_counter", 0) + 1
-        counter = counter % 10  # 10 physics steps = 100 Hz
-
-        # update info
-        info = {"obs_counter": counter}
-
-        # Normalize velociy so it is -1 to 1 for training stability (and to match action range)
+        # Normalize action from [-1, 1] to [-max_velocity, max_velocity]
         max_velocity = 20.0
         scaled_action = max_velocity * action
-        scaled_action = jp.clip(scaled_action, -max_velocity, max_velocity)
 
-        # physics step with mjx.Model
+        # Rate-limit action to avoid large jumps between steps (100 Hz control loop)
+        last_u = state.info["last_u"]
+        MAX_SPEED_CHANGE = 2.0  # max change per step at 100 Hz
+        delta = jp.clip(scaled_action - last_u, -MAX_SPEED_CHANGE, MAX_SPEED_CHANGE)
+        final_action = jp.clip(last_u + delta, -max_velocity, max_velocity)
+
+        # physics step with mjx.Model (n_substeps=5, advances 5×0.002s = 10ms per call)
         next_data = mjx_env.step(
             self._mjx_model,
             state.data,
-            scaled_action,
+            final_action,
             self.n_substeps,
         )
+
+        obs = self._get_obs(next_data, final_action)
 
         # Determine if robot has fallen over (based on pitch angle) or if there are NaNs in the state (indicating instability)
         # pitch angle
@@ -160,27 +156,19 @@ class Robot(mjx_env.MjxEnv):
         nan_fail = jp.isnan(next_data.qpos).any() | jp.isnan(next_data.qvel).any()
         done = (fallen | nan_fail).astype(float)
 
-        # SAFETY: stop motors if fallen
-        scaled_action = jp.where(fallen, jp.zeros_like(scaled_action), scaled_action)
-
-        reward = self._get_reward(next_data, scaled_action, state.info, state.metrics)
-        obs = self._get_obs(next_data, state.info)
+        reward = self._get_reward(next_data, final_action)
 
         reward = reward - 5.0 * fallen
 
-        return mjx_env.State(next_data, obs, reward, done, state.metrics, state.info)
+        new_info = {**state.info, "last_u": final_action}
+
+        return mjx_env.State(next_data, obs, reward, done, state.metrics, new_info)
 
     # -------------------- Observation --------------------
 
-    def _get_obs(self, data, info) -> jax.Array:
+    def _get_obs(self, data, last_u: jax.Array) -> jax.Array:
         # TODO: Add noise to observations
 
-        counter = info.get("obs_counter", 0)
-        # Only sample sensors every 10th physics step (100 Hz)
-        if counter != 0:
-            return info.get("last_obs")  # return previous observation
-
-        # fetch real sensor values now at 100 hz
         gyro = self._sensor(data, "gyro")
         pitch_rate = gyro[1]  # pitch rate (y-axis)
 
@@ -192,28 +180,26 @@ class Robot(mjx_env.MjxEnv):
         sinp = 2 * (qw * qy - qz * qx)
         pitch_angle = jp.arcsin(jp.clip(sinp, -1.0, 1.0))  # pitch angle
 
-        drift = data.qpos[0]
-        x_dot = data.qvel[0]
-        obs = jp.array([pitch_angle, pitch_rate, drift, x_dot])
-        info["last_obs"] = obs
+        # Normalise last_u to [-1, 1] so it's on the same scale as the other obs
+        last_u_normalised = last_u[0] / 20.0
 
-        # only return data robot actually has available
+        obs = jp.array([pitch_angle, pitch_rate, last_u_normalised])
+
         return obs
 
     # -------------------- Reward --------------------
 
-    def _get_reward(self, data, action, info, metrics) -> jax.Array:
+    def _get_reward(self, data, action) -> jax.Array:
         """
         Compute the reward signal for the robot control task.
 
         The reward encourages:
         1. Keeping the robot upright (pitch angle close to 0)
         2. Minimizing angular velocity (smooth motion)
-        3. Staying near the origin (don't drift away)
-        4. Using minimal control effort (energy efficiency)
+        3. Minimizing control effort (energy efficiency)
 
         Returns:
-            Total reward as the sum of four weighted reward components
+            Total reward as the sum of three weighted reward components
         """
         # Extract pitch angle from quaternion (qpos[3:7] = [qw, qx, qy, qz])
         q = data.qpos[3:7]
@@ -226,31 +212,23 @@ class Robot(mjx_env.MjxEnv):
         gyro = self._sensor(data, "gyro")
         theta_dot = gyro[1]
 
-        # Extract x position and primary control input
-        x = data.qpos[0]
-        x_dot = data.qvel[0]  # <--- ADD THIS
         u = action[0]
 
         # Reward component 1: Penalize large pitch angles (encourages upright)
-        # Gaussian penalty with scale 8.0, max reward = 1.0 at theta = 0
-        r_theta = jp.exp(-8.0 * theta**2)
+        # Gaussian penalty with scale 15.0, half-max at ~12° (tighter than 8.0 which was ~17°)
+        r_theta = jp.exp(-15.0 * theta**2)
 
         # Reward component 2: Penalize excessive angular velocity (smooth motion)
-        # Scaled to ~20% of theta reward, encourages damped motion
-        r_thetadot = 0.4 * jp.exp(-0.1 * theta_dot**2)
+        # Gaussian with σ≈0.7 rad/s (tighter than 0.1 which gave σ≈2.24 rad/s)
+        r_thetadot = 0.4 * jp.exp(-1.0 * theta_dot**2)
 
-        # Reward component 3: Penalize drift from center position (stay at origin)
-        # Increased from 0.1 to 0.5 and scale from 0.5 to 2.0 for stronger centering
-        r_x = 0.5 * jp.exp(-2.0 * x**2)
-
-        # NEW: Penalize cart velocity (critical damping term)
-        r_xdot = 0.6 * jp.exp(-1.0 * x_dot**2)  # <--- ADD THIS
-
-        # Reward component 4: Penalize control effort (energy efficiency)
+        # Reward component 3: Penalize control effort (energy efficiency)
         # Negative reward for non-zero actions, encourages passive balancing
         r_u = -0.001 * (u**2)
 
-        return r_theta + r_thetadot + r_x + r_xdot + r_u
+        reward = r_theta + r_thetadot + r_u
+
+        return reward
 
     # -------------------- Properties --------------------
 
