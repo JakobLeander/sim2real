@@ -1,6 +1,7 @@
 from .robot_control_interfaces import RobotControl
 from .hardware.imu import IMU
 from .hardware.motor import StepperMotor
+import math
 
 
 class RobotControlGPIO(RobotControl):
@@ -22,8 +23,11 @@ class RobotControlGPIO(RobotControl):
     def get_pitch_angle(self) -> float:
         # Implement GPIO-based method to read pitch angle
         # Placeholder implementation
-        pitch_angle = self._imu.pitch_angle  # Get pitch angle from IMU
-        return pitch_angle
+        pitch_angle = self._imu.pitch_angle_deg  # Get pitch angle from IMU
+
+        pitch_angle_rad = pitch_angle * (math.pi / 180.0)  # Convert to radians
+
+        return pitch_angle_rad
 
     def start_robot(self):
         # Implement GPIO-based method to start the robot
@@ -45,13 +49,13 @@ class RobotControlGPIO(RobotControl):
     def get_velocity(self):
         # Get velocity of robot in meters/second based on motor speeds and robot kinematics
         motor_speed_rad_per_sec = (self._left_motor.speed + self._right_motor.speed) / 2  # Average speed of both motors
-        wheel_radius = .0053  # Wheel radius in meters
+        wheel_radius = .053  # Wheel radius in meters
         velocity = motor_speed_rad_per_sec * wheel_radius
 
         return velocity
     
     def get_pitch_velocity(self) -> float:
-        # Implement GPIO-based method to read pitch velocity
+        # Get pitch velocity in rad/s
         # Placeholder implementation
-        pitch_velocity = self._imu.pitch_velocity  # Get pitch velocity from IMU
-        return pitch_velocity
+        pitch_velocity_rad_s = self._imu.pitch_velocity_deg_s * (math.pi / 180.0)  # Convert to radians/second
+        return pitch_velocity_rad_s

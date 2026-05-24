@@ -21,8 +21,8 @@ class IMU:
         self._running = False
         
         # Cached sensor data
-        self.pitch_velocity = 0.0  # Cache for pitch angular velocity
-        self.pitch_angle = 0.0  # Cache for pitch angular velocity
+        self.pitch_velocity_deg_s = 0.0  # Cache for pitch angular velocity
+        self.pitch_angle_deg = 0.0  # Cache for pitch angular velocity
         
         # Reading rate tracking
         self.readings_per_second = 0
@@ -131,26 +131,26 @@ class IMU:
         
         # Switching to CONFIGMODE
         self._write(0x3D, 0x00)
-        time.sleep(0.02)
+        time.sleep(0.05)
 
         #Selecting PAGE 0
         self._write(0x07, 0x00)
-        time.sleep(0.02)
+        time.sleep(0.05)
 
         # Setting power mode NORMAL
         self._write(0x3E, 0x00)
-        time.sleep(0.02)
+        time.sleep(0.05)
 
         # Clearing SYS_TRIGGER
         self._write(0x3F, 0x00)
-        time.sleep(0.02)
+        time.sleep(0.05)
 
 
         # Apply remap
         self._write(0x41, 0x06)   # X=Z, Y=Y, Z=X
-        time.sleep(0.02)
+        time.sleep(0.05)
         self._write(0x42, 0x02)   # Flip Y
-        time.sleep(0.02)
+        time.sleep(0.05)
 
         # Switching to NDOF mode
         self._write(0x3D, 0x0C)
@@ -172,8 +172,8 @@ class IMU:
                 if data is not None:
                     gyr_y_raw = struct.unpack_from("<h", data, 0)[0]
                     pitch_raw = struct.unpack_from("<h", data, 6)[0]
-                    self.pitch_angle = pitch_raw / 16.0
-                    self.pitch_velocity = gyr_y_raw / 16.0
+                    self.pitch_angle_deg = pitch_raw / 16.0
+                    self.pitch_velocity_deg_s = gyr_y_raw / 16.0
                 
                 # Track reading rate
                 read_count += 1
@@ -219,8 +219,8 @@ if __name__ == "__main__":
     print("[DBG] Starting main read loop...")
     try:
         while True:
-            pitch = imu.pitch_angle
-            pitch_angular_velocity = imu.pitch_velocity
+            pitch = imu.pitch_angle_deg
+            pitch_angular_velocity = imu.pitch_velocity_deg_s
             readings_per_second = imu.readings_per_second
             print(f"Pitch: Angle={pitch:.2f}°, AngularVel={pitch_angular_velocity:.2f}°/s, Rate={readings_per_second:.1f} Hz")
             time.sleep(0.1)
