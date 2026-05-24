@@ -56,10 +56,10 @@
         <geom class="wheel" />
       </body>
       <body name="electronics" pos="0.0 0.0 0.13">
-        <geom name="electronicsbox" type="box" size="0.005 0.05 0.1" mass="0.1" rgba="1 1 1 1" />
+        <geom name="electronicsbox" type="box" size="0.005 0.05 0.1" mass="0.2" rgba="1 1 1 1" />
       </body>
       <body name="battery" pos="0.0 0.0 0.235">
-        <geom name="batterybox" type="box" size="0.025 0.025 0.005" mass="0.15" rgba="0 0 0 1" />
+        <geom name="batterybox" type="box" size="0.0175 0.0525 0.0125" mass="0.17" rgba="0 0 0 1" />
       </body>
     </body>
   </worldbody>

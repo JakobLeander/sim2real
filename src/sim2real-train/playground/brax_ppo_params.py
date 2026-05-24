@@ -22,7 +22,7 @@ def brax_ppo_config(episode_length) -> config_dict.ConfigDict:
     """Returns tuned Brax PPO config"""
 
     rl_config = config_dict.create(
-        num_timesteps=60_000_000,
+        num_timesteps=60000000,
         num_evals=10,
         reward_scaling=1.0,
         episode_length=episode_length,
@@ -30,10 +30,10 @@ def brax_ppo_config(episode_length) -> config_dict.ConfigDict:
         action_repeat=1,
         unroll_length=20,
         num_minibatches=32,
-        num_updates_per_batch=8,
+        num_updates_per_batch=4,
         discounting=0.995,
         learning_rate=0.0003,
-        entropy_cost=3e-3,
+        entropy_cost=5e-3,
         num_envs=4096,
         batch_size=4096,
         num_resets_per_eval=10,
