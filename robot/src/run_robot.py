@@ -1,17 +1,22 @@
-
 import math
 import numpy as np
-from sim2real_robot.robot_control_gpio import RobotControlGPIO
-from sim2real_robot.robot_control_sim import RobotControlSim
-from sim2real_robot.ai.onnx_infer import OnnxInfer
+from robot.src.sim2real_robot.robot_control_gpio import RobotControlGPIO
+from robot.src.sim2real_robot.robot_control_sim import RobotControlSim
+from robot.src.sim2real_robot.ai.onnx_infer import OnnxInfer
 import time
 import logging
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s',filename='robot_runner.log', filemode='w')
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+    filename="robot_runner.log",
+    filemode="w",
+)
+
 
 class RobotRunner:
     CONTROL_RATE_HZ = 100
-    DT = 1/CONTROL_RATE_HZ
+    DT = 1 / CONTROL_RATE_HZ
 
     def __init__(self, backend: str = "gpio"):
         if backend == "real":
@@ -19,17 +24,19 @@ class RobotRunner:
         elif backend == "sim":
             self.robot_control = RobotControlSim()
         else:
-            raise ValueError(f"Unknown backend: {backend}. Supported backends: 'gpio', 'sim'")
-        
+            raise ValueError(
+                f"Unknown backend: {backend}. Supported backends: 'gpio', 'sim'"
+            )
+
         self._policy = OnnxInfer()
-        
+
         self._fps_count = 0
         self._fps_time_start = time.time()
         self._fps_elapsed = 0.0
-        self._last_u = 0.0           # normalized last command [-1, 1], fed into obs
-        self._last_motor_speed = 0.0 # actual rate-limited motor command [rad/s]
+        self._last_u = 0.0  # normalized last command [-1, 1], fed into obs
+        self._last_motor_speed = 0.0  # actual rate-limited motor command [rad/s]
         self.fps = 0.0
-        
+
         # drift in meters
         self._drift = 0.0
 
@@ -49,7 +56,7 @@ class RobotRunner:
         pitch_angle = self.robot_control.get_pitch_angle()
         pitch_velocity = self.robot_control.get_pitch_velocity()
         velocity = self.robot_control.get_velocity()
-        velocity=0
+        velocity = 0
         self._drift += velocity * self.DT
         self._drift = 0
 
@@ -63,8 +70,12 @@ class RobotRunner:
 
         # Rate-limit to match training (MAX_SPEED_CHANGE = 2.0 rad/s per step at 100 Hz)
         MAX_SPEED_CHANGE = 2.0
-        delta = np.clip(raw_speed - self._last_motor_speed, -MAX_SPEED_CHANGE, MAX_SPEED_CHANGE)
-        new_motor_speed = np.clip(self._last_motor_speed + delta, -max_velocity, max_velocity)
+        delta = np.clip(
+            raw_speed - self._last_motor_speed, -MAX_SPEED_CHANGE, MAX_SPEED_CHANGE
+        )
+        new_motor_speed = np.clip(
+            self._last_motor_speed + delta, -max_velocity, max_velocity
+        )
 
         # Store the actual command (normalized) as last_u for the next observation
         # This matches training: last_u_normalised = final_action[0] / 20.0
@@ -73,7 +84,9 @@ class RobotRunner:
 
         self.robot_control.set_speed(new_motor_speed)
 
-        self.write_logging(f"Pitch Angle: {pitch_angle:.2f} rad, Pitch Velocity: {pitch_velocity:.2f} rad/s,  Velocity: {velocity:.2f} m/s, Drift: {self._drift:.2f} m, Motor Speed: {new_motor_speed:.2f} rad/s, FPS: {self.fps:.2f}")
+        self.write_logging(
+            f"Pitch Angle: {pitch_angle:.2f} rad, Pitch Velocity: {pitch_velocity:.2f} rad/s,  Velocity: {velocity:.2f} m/s, Drift: {self._drift:.2f} m, Motor Speed: {new_motor_speed:.2f} rad/s, FPS: {self.fps:.2f}"
+        )
 
     def run(self):
         fps_count = 0
@@ -85,18 +98,20 @@ class RobotRunner:
             self.robot_control.start_robot()
 
             while True:
-                if time.perf_counter()>=next_time:
+                if time.perf_counter() >= next_time:
                     self.update()  # Update robot state
                     self.calculate_fps()
 
                     next_time += self.DT
-                    time.sleep(0.001)            
+                    time.sleep(0.001)
 
         finally:
             self.robot_control.stop_robot()
             print("\nRobot stopped. Exiting.")
 
-if __name__ == "__main__":
-    runner = RobotRunner(backend="real")  # Change to "sim" for simulation or "gpio" for real hardware
-    runner.run()
 
+if __name__ == "__main__":
+    runner = RobotRunner(
+        backend="real"
+    )  # Change to "sim" for simulation or "gpio" for real hardware
+    runner.run()

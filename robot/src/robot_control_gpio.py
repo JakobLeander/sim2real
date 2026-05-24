@@ -12,12 +12,23 @@ class RobotControlGPIO(RobotControl):
     MOTOR_RIGHT_ENABLE_PIN = 26
     MOTOR_RIGHT_STEP_PIN = 19
     MOTOR_RIGHT_DIR_PIN = 13
+
     def __init__(self):
         super().__init__()
 
         self._imu = IMU()  # Initialize the IMU sensor
-        self._left_motor = StepperMotor(step_pin=self.MOTOR_LEFT_STEP_PIN, dir_pin=self.MOTOR_LEFT_DIR_PIN, enable_pin=self.MOTOR_LEFT_ENABLE_PIN, reverse_direction=False)  # Initialize left motor
-        self._right_motor = StepperMotor(step_pin=self.MOTOR_RIGHT_STEP_PIN, dir_pin=self.MOTOR_RIGHT_DIR_PIN, enable_pin=self.MOTOR_RIGHT_ENABLE_PIN, reverse_direction=False)  # Initialize right motor
+        self._left_motor = StepperMotor(
+            step_pin=self.MOTOR_LEFT_STEP_PIN,
+            dir_pin=self.MOTOR_LEFT_DIR_PIN,
+            enable_pin=self.MOTOR_LEFT_ENABLE_PIN,
+            reverse_direction=False,
+        )  # Initialize left motor
+        self._right_motor = StepperMotor(
+            step_pin=self.MOTOR_RIGHT_STEP_PIN,
+            dir_pin=self.MOTOR_RIGHT_DIR_PIN,
+            enable_pin=self.MOTOR_RIGHT_ENABLE_PIN,
+            reverse_direction=False,
+        )  # Initialize right motor
         self._imu = IMU()  # Initialize the IMU sensor
 
     def get_pitch_angle(self) -> float:
@@ -48,14 +59,18 @@ class RobotControlGPIO(RobotControl):
 
     def get_velocity(self):
         # Get velocity of robot in meters/second based on motor speeds and robot kinematics
-        motor_speed_rad_per_sec = (self._left_motor.speed + self._right_motor.speed) / 2  # Average speed of both motors
-        wheel_radius = .053  # Wheel radius in meters
+        motor_speed_rad_per_sec = (
+            self._left_motor.speed + self._right_motor.speed
+        ) / 2  # Average speed of both motors
+        wheel_radius = 0.053  # Wheel radius in meters
         velocity = motor_speed_rad_per_sec * wheel_radius
 
         return velocity
-    
+
     def get_pitch_velocity(self) -> float:
         # Get pitch velocity in rad/s
         # Placeholder implementation
-        pitch_velocity_rad_s = self._imu.pitch_velocity_deg_s * (math.pi / 180.0)  # Convert to radians/second
+        pitch_velocity_rad_s = self._imu.pitch_velocity_deg_s * (
+            math.pi / 180.0
+        )  # Convert to radians/second
         return pitch_velocity_rad_s

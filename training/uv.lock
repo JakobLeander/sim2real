@@ -2211,59 +2211,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sim2real-train"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "brax" },
-    { name = "etils" },
-    { name = "flax" },
-    { name = "jax", extra = ["cuda12"] },
-    { name = "jax2onnx" },
-    { name = "mediapy" },
-    { name = "ml-collections" },
-    { name = "mujoco" },
-    { name = "mujoco-mjx" },
-    { name = "onnxoptimizer" },
-    { name = "onnxruntime" },
-    { name = "orbax-checkpoint" },
-    { name = "torch" },
-    { name = "tqdm" },
-    { name = "warp-lang" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-]
-test = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "brax", specifier = "==0.14.2" },
-    { name = "etils", specifier = "==1.14.0" },
-    { name = "flax", specifier = "==0.12.6" },
-    { name = "jax", extras = ["cuda12"], specifier = "==0.9.2" },
-    { name = "jax2onnx", specifier = "==0.12.5" },
-    { name = "mediapy", specifier = "==1.2.6" },
-    { name = "ml-collections", specifier = "==1.1.0" },
-    { name = "mujoco", specifier = "==3.7.0" },
-    { name = "mujoco-mjx" },
-    { name = "onnxoptimizer", specifier = "==0.4.2" },
-    { name = "onnxoptimizer", specifier = ">=0.4.2" },
-    { name = "onnxruntime", specifier = "==1.24.4" },
-    { name = "orbax-checkpoint", specifier = "==0.11.36" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "torch", specifier = "==2.11.0" },
-    { name = "tqdm", specifier = "==4.67.3" },
-    { name = "warp-lang", specifier = "==1.12.1" },
-]
-provides-extras = ["dev", "test"]
-
-[[package]]
 name = "simplejson"
 version = "3.20.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2441,6 +2388,59 @@ sdist = { url = "https://files.pythonhosted.org/packages/09/a9/6ba95a270c6f1fbcd
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl", hash = "sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf", size = 78374, upload-time = "2026-02-03T17:35:50.982Z" },
 ]
+
+[[package]]
+name = "training"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "brax" },
+    { name = "etils" },
+    { name = "flax" },
+    { name = "jax", extra = ["cuda12"] },
+    { name = "jax2onnx" },
+    { name = "mediapy" },
+    { name = "ml-collections" },
+    { name = "mujoco" },
+    { name = "mujoco-mjx" },
+    { name = "onnxoptimizer" },
+    { name = "onnxruntime" },
+    { name = "orbax-checkpoint" },
+    { name = "torch" },
+    { name = "tqdm" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+test = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "brax", specifier = "==0.14.2" },
+    { name = "etils", specifier = "==1.14.0" },
+    { name = "flax", specifier = "==0.12.6" },
+    { name = "jax", extras = ["cuda12"], specifier = "==0.9.2" },
+    { name = "jax2onnx", specifier = "==0.12.5" },
+    { name = "mediapy", specifier = "==1.2.6" },
+    { name = "ml-collections", specifier = "==1.1.0" },
+    { name = "mujoco", specifier = "==3.7.0" },
+    { name = "mujoco-mjx" },
+    { name = "onnxoptimizer", specifier = "==0.4.2" },
+    { name = "onnxoptimizer", specifier = ">=0.4.2" },
+    { name = "onnxruntime", specifier = "==1.24.4" },
+    { name = "orbax-checkpoint", specifier = "==0.11.36" },
+    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "torch", specifier = "==2.11.0" },
+    { name = "tqdm", specifier = "==4.67.3" },
+    { name = "warp-lang", specifier = "==1.12.1" },
+]
+provides-extras = ["dev", "test"]
 
 [[package]]
 name = "traitlets"
