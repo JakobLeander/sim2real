@@ -36,6 +36,9 @@ test = ["pytest"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+training = ["xmls/*.xml"]
+
 [tool.uv]
 managed = true
 python-preference = "managed"

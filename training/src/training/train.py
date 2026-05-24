@@ -44,9 +44,9 @@ from orbax import checkpoint as ocp
 import pickle
 
 # Project imports
-import robot
-from playground import wrapper
-from playground import brax_ppo_params
+from training import robot
+from training.playground import wrapper
+from training.playground import brax_ppo_params
 
 
 def configure_mujoco():

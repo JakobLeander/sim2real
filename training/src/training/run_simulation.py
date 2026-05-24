@@ -11,7 +11,7 @@ import mujoco.viewer as viewer
 import time
 from etils import epath
 from warp import jax
-from helper.onnx_infer import OnnxInfer
+from training.helper.onnx_infer import OnnxInfer
 import logging
 
 logging.basicConfig(

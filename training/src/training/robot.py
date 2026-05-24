@@ -9,7 +9,7 @@ import logging
 from etils import epath
 
 
-from playground import mjx_env
+from training.playground import mjx_env
 
 log = logging.getLogger(__name__)
 

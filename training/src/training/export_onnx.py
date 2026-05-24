@@ -14,8 +14,8 @@ from etils import epath
 import onnxruntime as ort
 import jax2onnx
 
-import robot
-from playground import wrapper
+from training import robot
+from training.playground import wrapper
 
 
 # =========================================================
