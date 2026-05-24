@@ -1,0 +1,29 @@
+[project]
+name = "sim2real-robot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "jakobleander", email = "Jakob.leander@gmail.com" }
+]
+requires-python = "==3.11.2"
+dependencies = [
+    "rpi-gpio>=0.7.1",
+    "pyserial",
+    "onnxruntime==1.24.4",
+    # The Python pigpio package requires the Raspberry Pi OS pigpio daemon
+    # service to be installed separately. Install with: sudo apt install pigpio or build from source
+    "pigpio",
+]
+
+[project.optional-dependencies]
+raspberrypi = [
+    "pigpio",
+]
+
+[project.scripts]
+sim2real-robot = "sim2real_robot:main"
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
