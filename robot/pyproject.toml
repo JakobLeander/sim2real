@@ -1,5 +1,5 @@
 [project]
-name = "sim2real-robot"
+name = "robot"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -20,9 +20,6 @@ dependencies = [
 raspberrypi = [
     "pigpio",
 ]
-
-[project.scripts]
-sim2real-robot = "sim2real_robot:main"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]
