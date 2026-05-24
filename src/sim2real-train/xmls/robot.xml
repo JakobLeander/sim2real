@@ -1,0 +1,77 @@
+<mujoco model="balancing car">
+  <compiler autolimits="true" />
+  <option timestep="0.002" iterations="10" ls_iterations="10" gravity="0 0 -9.81">
+    <flag eulerdamp="disable" />
+  </option>
+  <asset>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1"
+      markrgb="0 0 0"
+      width="300" height="300" />
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"
+      reflectance="0" />
+    <material name="target" rgba=".6 .3 .3 1" />
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800" />
+    <texture name="wheel_tex" type="2d" builtin="checker"
+      rgb1="0.2 0.2 0.2" rgb2="0.8 0.8 0.8"
+      width="100" height="100" />
+    <material name="wheel_mat" texture="wheel_tex" texrepeat="4 1" />
+  </asset>
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0" />
+    <rgba haze="0.15 0.25 0.35 1" />
+    <global azimuth="160" elevation="-20" />
+  </visual>
+
+  <default>
+    <joint damping=".03" actuatorfrcrange="-5 5" />
+    <default class="wheel">
+      <geom type="cylinder" size=".05 .0106" rgba=".5 .5 1 1" material="wheel_mat" mass="0.03"
+        friction="0.7 0.01 0.004" />
+    </default>
+  </default>
+  <sensor>
+    <gyro site="imu" name="gyro" />
+    <velocimeter site="imu" name="local_linvel" />
+    <accelerometer site="imu" name="accelerometer" />
+  </sensor>
+  <worldbody>
+    <camera name="fixed" pos="0 0 3.0" quat="1 0 0 0" />
+    <camera name="cam0" pos="0 -4 3.2" xyaxes="1 0 0 0 1 2" />
+    <camera name="default" pos="1.108 -2.362 1.529" xyaxes="0.905 0.425 -0.000 -0.215 0.458 0.863" />
+
+
+    <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1"
+      conaffinity="0"
+      priority="1" friction="0.9" condim="3" />
+    <body name="car" pos="0 0 .06">
+      <freejoint />
+      <geom name="wheelbox" type="box" size=".03 .06 .03" mass="0.6" rgba="1 1 1 1" />
+      <site name="imu" pos="0.0 0.0 .11" rgba="1 0 0 1" />
+      <body name="left wheel" pos="0.0 .071 0.0" zaxis="0 1 0">
+        <joint name="left" />
+        <geom class="wheel" />
+      </body>
+      <body name="right wheel" pos="0.0 -.071 0.0" zaxis="0 1 0">
+        <joint name="right" />
+        <geom class="wheel" />
+      </body>
+      <body name="electronics" pos="0.0 0.0 0.13">
+        <geom name="electronicsbox" type="box" size="0.005 0.05 0.1" mass="0.2" rgba="1 1 1 1" />
+      </body>
+      <body name="battery" pos="0.0 0.0 0.235">
+        <geom name="batterybox" type="box" size="0.0175 0.0525 0.0125" mass="0.17" rgba="0 0 0 1" />
+      </body>
+    </body>
+  </worldbody>
+
+  <tendon>
+    <fixed name="drive">
+      <joint joint="left" coef=".5" />
+      <joint joint="right" coef=".5" />
+    </fixed>
+  </tendon>
+
+  <actuator>
+    <velocity name="motor" tendon="drive" ctrlrange="-20 20" kv=".4" forcerange="-0.46 0.46" />
+  </actuator>
+</mujoco>

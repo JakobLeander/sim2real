@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sim2real-train"
+version = "0.1.0"
+description = "Simulation to Reality Demonstration"
+readme = "README.md"
+requires-python = ">=3.12.3"
+license = {text = "LICENSE"}
+authors = []
+dependencies = [
+    "brax==0.14.2",
+    "etils==1.14.0",
+    "flax==0.12.6",
+    "jax[cuda12]==0.9.2",
+    "mediapy==1.2.6",
+    "ml_collections==1.1.0",
+    "mujoco-mjx",
+    "mujoco==3.7.0",
+    "onnxruntime==1.24.4",
+    "onnxoptimizer==0.4.2",
+    "orbax-checkpoint==0.11.36",
+    "tqdm==4.67.3",
+    "torch==2.11.0",
+    "jax2onnx==0.12.5",
+    "warp-lang==1.12.1",
+    "onnxoptimizer>=0.4.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv]
+managed = true
+python-preference = "managed"
+required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
