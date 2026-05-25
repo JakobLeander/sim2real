@@ -9,11 +9,6 @@ from mujoco import mjx
 import logging
 from etils import epath
 
-# Add repo root to path so shared/ package is importable
-_REPO_ROOT = str(epath.Path(__file__).parents[3])
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
 from shared.constants import RobotSpec
 
 from training.playground import mjx_env

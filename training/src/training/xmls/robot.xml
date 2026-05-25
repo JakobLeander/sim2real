@@ -25,7 +25,7 @@
   <default>
     <joint damping=".03" actuatorfrcrange="-5 5" />
     <default class="wheel">
-      <geom type="cylinder" size=".05 .0106" rgba=".5 .5 1 1" material="wheel_mat" mass="0.03"
+      <geom type="cylinder" size=".053 .01" rgba=".5 .5 1 1" material="wheel_mat" mass="0.03"
         friction="0.7 0.01 0.004" />
     </default>
   </default>

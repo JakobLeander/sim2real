@@ -1,0 +1,15 @@
+{
+  "extraPaths": ["shared/src", "training/src"],
+  "executionEnvironments": [
+    {
+      "root": "robot",
+      "venvPath": "robot",
+      "venv": ".venv"
+    },
+    {
+      "root": "training",
+      "venvPath": "training",
+      "venv": ".venv"
+    }
+  ]
+}

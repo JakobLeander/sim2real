@@ -11,6 +11,7 @@ requires-python = ">=3.12.3"
 license = {text = "LICENSE"}
 authors = []
 dependencies = [
+    "shared",
     "brax==0.14.2",
     "etils==1.14.0",
     "flax==0.12.6",
@@ -47,3 +48,6 @@ required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_6
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
+
+[tool.uv.sources]
+shared = { path = "../shared", editable = true }

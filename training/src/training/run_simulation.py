@@ -2,22 +2,13 @@
 Run the trained policy in a simulator
 """
 
-import sys
-from typing import Any, Dict, Optional, Union
-import mujoco
-import pickle
-import numpy as np
+from typing import Dict
 import mujoco
 import mujoco.viewer as viewer
+import numpy as np
 import time
 from etils import epath
-from warp import jax
 from training.helper.onnx_infer import OnnxInfer
-
-# Add repo root to path so shared/ package is importable
-_REPO_ROOT = str(epath.Path(__file__).parents[3])
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
 
 from shared.constants import RobotSpec
 import logging
