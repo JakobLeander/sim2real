@@ -21,9 +21,8 @@ from training.playground import wrapper
 # =========================================================
 # Load trained params
 # =========================================================
-def load_params():
-    policies_dir = epath.Path("policies")
-    with open(policies_dir / "robot_policy.pkl", "rb") as f:
+def load_params(pkl_path):
+    with open(pkl_path, "rb") as f:
         return pickle.load(f)
 
 
@@ -144,6 +143,8 @@ def validate(onnx_path, jax_policy, obs_shape):
 # =========================================================
 def main():
     print("🚀 JAX → ONNX Export (Correct Pipeline)")
+    pkl_path = epath.Path(__file__).parents[3] / "policies" / "robot_policy.pkl"
+    onnx_path = epath.Path(__file__).parents[3] / "policies" / "robot_policy.onnx"
 
     env_cfg = robot.default_config()
     env = robot.Robot(env_cfg)
@@ -155,7 +156,7 @@ def main():
     # -----------------------------
     # Load trained params
     # -----------------------------
-    params = load_params()
+    params = load_params(pkl_path)
 
     # -----------------------------
     # Build inference function
@@ -167,8 +168,6 @@ def main():
     # -----------------------------
     # Export ONNX
     # -----------------------------
-    onnx_path = epath.Path("policies/robot_policy.onnx")
-
     export_to_onnx(jax_policy, obs_size, onnx_path)
 
     # -----------------------------

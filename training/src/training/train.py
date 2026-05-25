@@ -79,8 +79,7 @@ def progress(num_steps, metrics):
 
 def main():
     debug = False
-    policies_dir = epath.Path("policies")
-    policies_dir.mkdir(parents=True, exist_ok=True)
+    policies_dir = epath.Path(__file__).parents[3] / "policies"
 
     configure_mujoco()
 

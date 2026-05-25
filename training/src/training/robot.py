@@ -1,3 +1,4 @@
+import sys
 from typing import Any, Dict, Optional, Union
 
 import jax
@@ -8,6 +9,12 @@ from mujoco import mjx
 import logging
 from etils import epath
 
+# Add repo root to path so shared/ package is importable
+_REPO_ROOT = str(epath.Path(__file__).parents[3])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from shared.constants import RobotSpec
 
 from training.playground import mjx_env
 
@@ -18,7 +25,7 @@ _XML_PATH = epath.Path(__file__).parent / "xmls/robot.xml"
 
 def default_config() -> config_dict.ConfigDict:
     return config_dict.create(
-        ctrl_dt=0.01,
+        ctrl_dt=RobotSpec.CONTROL_DT,
         sim_dt=0.002,
         episode_length=1000,
         action_repeat=1,
@@ -126,13 +133,15 @@ class Robot(mjx_env.MjxEnv):
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
         # Normalize action from [-1, 1] to [-max_velocity, max_velocity]
-        max_velocity = 20.0
+        max_velocity = RobotSpec.MAX_VELOCITY
+        max_delta_vel = RobotSpec.MAX_DELTA_VEL  # max change per step at 100 Hz
+
         scaled_action = max_velocity * action
 
         # Rate-limit action to avoid large jumps between steps (100 Hz control loop)
         last_u = state.info["last_u"]
-        MAX_SPEED_CHANGE = 2.0  # max change per step at 100 Hz
-        delta = jp.clip(scaled_action - last_u, -MAX_SPEED_CHANGE, MAX_SPEED_CHANGE)
+
+        delta = jp.clip(scaled_action - last_u, -max_delta_vel, max_delta_vel)
         final_action = jp.clip(last_u + delta, -max_velocity, max_velocity)
 
         # physics step with mjx.Model (n_substeps=5, advances 5×0.002s = 10ms per call)

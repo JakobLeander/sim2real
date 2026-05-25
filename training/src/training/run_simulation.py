@@ -2,6 +2,7 @@
 Run the trained policy in a simulator
 """
 
+import sys
 from typing import Any, Dict, Optional, Union
 import mujoco
 import pickle
@@ -12,6 +13,13 @@ import time
 from etils import epath
 from warp import jax
 from training.helper.onnx_infer import OnnxInfer
+
+# Add repo root to path so shared/ package is importable
+_REPO_ROOT = str(epath.Path(__file__).parents[3])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from shared.constants import RobotSpec
 import logging
 
 logging.basicConfig(
@@ -25,15 +33,17 @@ logging.basicConfig(
 class RobotRunner:
     def __init__(self):
         robot_xml_path = epath.Path(__file__).parent / "xmls/robot.xml"
-        onnx_policy_path = "policies/robot_policy.onnx"
+        onnx_path = epath.Path(__file__).parents[3] / "policies" / "robot_policy.onnx"
         self.model = mujoco.MjModel.from_xml_string(robot_xml_path.read_text())
 
         self.sim_dt = 0.001  # physics runs at 1000 hz
+        self.ctrl_dt = RobotSpec.CONTROL_DT
+
         self.model.opt.timestep = self.sim_dt
         self.data = mujoco.MjData(self.model)
         mujoco.mj_step(self.model, self.data)
 
-        self.policy = OnnxInfer(onnx_policy_path, awd=True)
+        self.policy = OnnxInfer(onnx_path, awd=True)
 
         self.nudge = False
 
@@ -95,12 +105,29 @@ class RobotRunner:
 
             counter = 0
             nudge_counter = 0
-            max_velocity = 20.0
-            MAX_SPEED_CHANGE = 2.0  # must match robot.py training constraint
+            MAX_VELOCITY = RobotSpec.MAX_VELOCITY
+            MAX_DELTA_VEL = RobotSpec.MAX_DELTA_VEL
+            CTRL_DT_COUNT = round(self.ctrl_dt / self.sim_dt)
+
             last_action = np.zeros(self.model.nu)
 
-            # print observation size
-            print(f"Observation size: {len(self.get_obs(self.data, 0.0))}")
+            logging.info("=" * 60)
+            logging.info("RobotRunner starting")
+            logging.info("=" * 60)
+            logging.info(
+                f"  sim_dt:        {self.sim_dt:.4f} s  ({1/self.sim_dt:.0f} Hz)"
+            )
+            logging.info(
+                f"  ctrl_dt:       {self.ctrl_dt:.4f} s  ({1/self.ctrl_dt:.0f} Hz)"
+            )
+            logging.info(f"  ctrl_dt_count: {CTRL_DT_COUNT} sim steps per control step")
+            logging.info(f"  max_velocity:  {MAX_VELOCITY} rad/s")
+            logging.info(f"  max_delta_vel: {MAX_DELTA_VEL} rad/s per control step")
+            logging.info(f"  nu (actuators):{self.model.nu}")
+            logging.info(f"  nq:            {self.model.nq}")
+            logging.info(f"  nv:            {self.model.nv}")
+            logging.info(f"  obs_size:      {len(self.get_obs(self.data, 0.0))}")
+            logging.info("=" * 60)
 
             while v.is_running():
                 step_start = time.time()
@@ -109,26 +136,28 @@ class RobotRunner:
 
                 counter += 1
 
-                # our action loop runs at 1000 hz, so we only infer every 10 steps to simular physical sensor readings at 100 hz (gyro is the limiting factor since it runs at 100 hz in real life)
-                if counter % 10 == 0:
+                # Insure control loop running at same rate as physical robot
+                if counter % CTRL_DT_COUNT == 0:
                     obs = self.get_obs(self.data, last_action[0])
                     action = self.policy.infer(obs)
 
                     # Unnormalize
-                    action = max_velocity * action
+                    action = MAX_VELOCITY * action
 
                     # Rate-limit: match the training constraint in robot.py
-                    delta = np.clip(
-                        action - last_action, -MAX_SPEED_CHANGE, MAX_SPEED_CHANGE
-                    )
-                    action = np.clip(last_action + delta, -max_velocity, max_velocity)
+                    delta = np.clip(action - last_action, -MAX_DELTA_VEL, MAX_DELTA_VEL)
+                    action = np.clip(last_action + delta, -MAX_VELOCITY, MAX_VELOCITY)
                     last_action = action.copy()
 
                     if self.nudge:
-                        nudge_counter += 1
                         action += np.random.uniform(2.0, 2.0, size=action.shape)
-                        action = np.clip(action, -max_velocity, max_velocity)
+                        action = np.clip(action, -MAX_VELOCITY, MAX_VELOCITY)
                         last_action = action.copy()
+                        logging.info(
+                            f"NUDGE [{nudge_counter}/10]: Motor Speed: {action[0]:.4f} rad/s"
+                        )
+                        nudge_counter += 1
+
                         if nudge_counter > 10:
                             self.nudge = False
                             nudge_counter = 0
